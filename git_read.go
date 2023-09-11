@@ -10,48 +10,20 @@ import (
 )
 
 func (g *GitBackend) GetPage(title string) (*Page, error) {
-	g.mutex.RLock()
-	defer g.mutex.RUnlock()
-
-	filePath, gitPath, err := g.resolvePath(g.dir, fmt.Sprintf("%s.md", title))
-	if err != nil {
-		return nil, err
-	}
-
-	commitIter, err := g.repo.Log(&git.LogOptions{
-		PathFilter: func(s string) bool {
-			return s == gitPath
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	commit, err := commitIter.Next()
-	if err != nil {
-		return nil, err
-	}
-	bytes, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-	return &Page{
-		Content: bytes,
-		LastModified: &LogEntry{
-			ChangeId: commit.Hash.String(),
-			User:     commit.Author.Name,
-			Time:     commit.Author.When,
-			Message:  commit.Message,
-		},
-	}, nil
+	return g.GetPageAt(title, "HEAD")
 }
 
 func (g *GitBackend) GetFile(name string) (io.ReadCloser, error) {
-	filePath, _, err := g.resolvePath(g.dir, name)
+	g.mutex.RLock()
+	defer g.mutex.RUnlock()
+
+	_, gitPath, err := g.resolvePath(g.dir, name)
+	_, b, err := g.pathAtRevision(gitPath, revision)
 	if err != nil {
 		return nil, err
 	}
 
-	return os.Open(filePath)
+	return b
 }
 
 func (g *GitBackend) GetConfig(name string) ([]byte, error) {
