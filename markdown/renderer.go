@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	mathjax "github.com/litao91/goldmark-mathjax"
-	"github.com/mdigger/goldmark-attributes"
+	attributes "github.com/mdigger/goldmark-attributes"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"

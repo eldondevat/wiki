@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"path"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -141,28 +143,27 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 	}
 
 	var history []*RecentChange
-	for i := 0; i < count; i++ {
-		commit, err := commitIter.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
+	remaining := count
+	err = commitIter.ForEach(func(commit *object.Commit) error {
+		remaining--
+		if remaining == 0 {
+			return storer.ErrStop
 		}
+		log.Printf("Commit in changes: %s", commit)
 
 		myTree, err := commit.Tree()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		parent, err := commit.Parent(0)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		parentTree, err := parent.Tree()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		entry := &RecentChange{
@@ -189,7 +190,7 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 			hashes[name] = entry.Hash
 			return nil
 		}); err != nil {
-			return nil, err
+			return err
 		}
 
 		// Find any hashes that have changed, or files that exist in the parent tree that no longer do
@@ -200,7 +201,7 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 			delete(hashes, name)
 			return nil
 		}); err != nil {
-			return nil, err
+			return err
 		}
 
 		// Any leftover files are new compared to the parent tree
@@ -209,7 +210,8 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 		}
 
 		history = append(history, entry)
-	}
+		return nil
+	})
 	return history, nil
 }
 

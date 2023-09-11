@@ -86,6 +86,7 @@ func RecentChangesHandler(t *Templates, rp RecentChangesProvider) http.HandlerFu
 
 		history, err := rp.RecentChanges(start, number)
 		if err != nil {
+			log.Printf("error: %s", err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

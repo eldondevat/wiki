@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -68,6 +69,7 @@ func (g *GitBackend) walkFiles(handler func(filePath, webPath string, info fs.Di
 }
 
 func (g *GitBackend) resolveRevision(rv string) (*plumbing.Hash, error) {
+	log.Printf("Resolving revision: %s", rv)
 	if rv == "" {
 		rv = "HEAD"
 	}
