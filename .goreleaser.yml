@@ -6,7 +6,7 @@ gomod:
 before:
   hooks:
     - go generate ./...
-    - go run github.com/google/go-licenses@atest save ./... --save_path=./notices --force --ignore github.com/pjbgf/sha1cd/cgo --ignore github.com/cloudflare/circl --ignore golang.org/x
+    - go run github.com/google/go-licenses@latest save ./... --save_path=./notices --force --ignore github.com/pjbgf/sha1cd/cgo --ignore github.com/cloudflare/circl --ignore golang.org/x
 builds:
   - id: wiki
     env:
@@ -33,10 +33,6 @@ dockers:
     goarm: ''
     dockerfile: gorelease.Dockerfile
     image_templates:
-      - "mdbot/wiki:{{ .Major }}"
-      - "mdbot/wiki:{{ .Major }}.{{ .Minor }}"
-      - "mdbot/wiki:{{ .Tag }}"
-      - "mdbot/wiki:latest"
       - "ghcr.io/mdbot/wiki:{{ .Major }}"
       - "ghcr.io/mdbot/wiki:{{ .Major }}.{{ .Minor }}"
       - "ghcr.io/mdbot/wiki:{{ .Tag }}"
@@ -50,12 +46,14 @@ milestones:
 changelog:
   skip: true
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+  - name_template: >-
+      {{- .ProjectName }}_
+      {{- .Version}}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end -}}
     files:
       - notices/**/*
       - README*
